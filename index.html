@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CriticOPD · Recovering Reliable Supervision via Critique-Guided On-Policy Distillation</title>
+  <meta name="description" content="In on-policy distillation, the teacher follows the student's errors although it recognizes them. CriticOPD turns the teacher's critique into reliable token-level supervision.">
+  <meta property="og:title" content="Recovering Reliable Supervision via Critique-Guided On-Policy Distillation">
+  <meta property="og:description" content="The teacher critiques an incorrect rollout, the student rewrites from the last error, and the teacher scores the rewrite with the critique in its context.">
+  <meta property="og:image" content="assets/overview.png">
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <link rel="stylesheet" href="style.css?v=20261014">
+</head>
+<body>
+
+<header class="site-header">
+  <a class="wordmark" href="#top"><img src="assets/mark.png" alt=""><span>Critic<b>OPD</b></span></a>
+  <nav>
+    <a href="#diagnosis">Where it fails</a>
+    <a href="#method">Method</a>
+    <a href="#results">Results</a>
+    <a href="#resources">Resources</a>
+  </nav>
+  <div class="header-links">
+    <span class="soon" title="The arXiv version will be linked here">arXiv <small>soon</small></span>
+    <a href="https://github.com/kzhao5/CriticOPD">GitHub</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- Hero -->
+  <section class="hero container">
+    <img class="hero-logo" src="assets/logo.png" alt="CriticOPD">
+    <p class="eyebrow">On-policy distillation · teacher critique · privileged information</p>
+    <h1>Recovering Reliable Supervision via <br>Critique-Guided On-Policy Distillation</h1>
+    <p class="subtitle">The teacher <em>follows</em> the student's errors, but still <em>recognizes</em> them</p>
+    <div class="authors">
+      <span>Kaixiang Zhao<sup>1</sup></span>
+      <span>Tianrun Yu<sup>1</sup></span>
+      <span>Shangzhe Li<sup>2</sup></span>
+      <span>Yuxiao Yang<sup>2</sup></span>
+      <span>Amanda Hughes<sup>1</sup></span>
+      <span>Weitong Zhang<sup>2</sup></span>
+      <span>Taylor W. Killian<sup>1</sup></span>
+    </div>
+    <div class="affiliations">
+      <span><sup>1</sup>Brigham Young University</span>
+      <span><sup>2</sup>University of North Carolina at Chapel Hill</span>
+    </div>
+    <p class="note">Contact · <a href="mailto:kzhao2@byu.edu">kzhao2@byu.edu</a> · <a href="mailto:tkillian@cs.byu.edu">tkillian@cs.byu.edu</a></p>
+    <a class="lab" href="https://byu-adept-lab.github.io/" aria-label="ADEPT Lab at Brigham Young University">
+      <img src="assets/adept-mark.png" alt="ADEPT Lab logo" width="24" height="21">
+      <span><strong>ADEPT Lab</strong><span class="lab-sep">·</span>Brigham Young University</span>
+    </a>
+    <div class="actions">
+      <a class="btn primary" href="https://github.com/kzhao5/CriticOPD"><svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>Code</a>
+      <span class="btn disabled" title="The arXiv version will be linked here">Paper <small>arXiv · soon</small></span>
+      <a class="btn" href="#results">Results</a>
+      <a class="btn ghost" href="#citation">BibTeX</a>
+    </div>
+  </section>
+
+  <!-- Central idea -->
+  <section class="container">
+    <div class="idea">
+      <div class="idea-text">
+        <p class="eyebrow">The central idea</p>
+        <h2>After the student errs, the teacher still recognizes the error. CriticOPD turns that recognition into supervision.</h2>
+        <p>On-policy distillation (OPD) trains a student on its own rollouts, with the teacher's next-token distribution as the target at every prefix. This target is only useful if the teacher can still reach a correct answer from the student's prefix. On incorrect rollouts it often cannot: it follows the student's errors. CriticOPD asks the teacher to critique the rollout instead, lets the student rewrite from the last error, and lets the teacher score the rewrite with the critique in its context.</p>
+      </div>
+      <div class="idea-math">
+        <div class="eq-card">
+          <span class="eq-label">OPD scores the student's prefix</span>
+          $$A_t = \log \pi_T(y_t \mid h_t) - \log \pi_\theta(y_t \mid h_t)$$
+          <span class="eq-note">the teacher target $\pi_T(\cdot \mid h_t)$ follows the error in $h_t$</span>
+        </div>
+        <div class="eq-arrow" aria-hidden="true">↓</div>
+        <div class="eq-card accent">
+          <span class="eq-label">CriticOPD scores the rewrite with the critique</span>
+          $$A_t^{\mathrm{fb}} = \log \pi_T(\tilde y_t \mid \tilde h_t, c) - \log \pi_\theta(\tilde y_t \mid \tilde h_t)$$
+          <span class="eq-note">the critique $c$ is in the teacher's context only</span>
+        </div>
+      </div>
+    </div>
+    <ol class="takeaways">
+      <li><span>01</span><div><strong>Where it fails.</strong> Along incorrect rollouts of problems that it solves readily, the teacher's accuracy from the student's prefix falls from 0.82 to 0.29, and up to half of its failed continuations end with the student's wrong answer.</div></li>
+      <li><span>02</span><div><strong>What survives.</strong> Asked to critique the same prefixes, the teacher still recognizes the errors: 73% to 81% of the errors that it flags are real, at every level of recoverability.</div></li>
+      <li><span>03</span><div><strong>How CriticOPD uses it.</strong> Every supervised token is written by the student, and the critique is privileged information: the student needs no feedback at inference.</div></li>
+    </ol>
+  </section>
+
+  <section class="container figure-wide">
+    <figure>
+      <img src="assets/overview.png" alt="Overview of CriticOPD: student rollout, teacher critique, student rewrite, and feedback distillation">
+      <figcaption>Overview of CriticOPD. (a) The student writes a rollout. (b) If it is wrong or truncated, the teacher critiques it with the reference answer as a guide. (c) The student keeps its prefix through the last critiqued error and rewrites the rest with the critique. (d) The teacher scores the rewrite with the critique in its context, and the student learns from it without the critique. Correct rollouts are trained with standard OPD.</figcaption>
+    </figure>
+  </section>
+
+  <!-- 01 Where it fails -->
+  <section id="diagnosis" class="section">
+    <div class="container">
+      <p class="kicker">01 / Where the supervision fails</p>
+      <h2>On incorrect rollouts, the teacher follows the error.</h2>
+      <div class="lead">
+        <p>We measure the reliability of the teacher by its <strong>recoverability</strong> $\Lambda^T(h_t)$: its accuracy when it continues from a prefix $h_t$ of the student. A student that imitates the teacher perfectly from $h_t$ onward reaches exactly this accuracy, so a low $\Lambda^T$ means that the OPD target is an unreliable corrective signal.</p>
+        <p>We cut 300 rollouts of a Qwen3-1.7B student at eight positions and let the Qwen3-4B-Instruct-2507 teacher continue 16 times from each cut. On correct rollouts the teacher stays at or above 0.93. On incorrect rollouts it declines sharply, even on problems that it solves readily from scratch.</p>
+      </div>
+
+      <div class="grid-2 figs">
+        <figure>
+          <img src="assets/failure_region.png" alt="Teacher and student continuation accuracy along correct and incorrect rollouts">
+          <figcaption>Teacher ($\Lambda^T$) and student ($\Lambda^S$) continuation accuracy along (a) correct and (b) incorrect rollouts. Solid lines: problems that the teacher solves readily; dashed lines: problems that it rarely solves.</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/critique.png" alt="Outcomes of teacher continuations and valid error-flag rate">
+          <figcaption>(a) Outcomes of the teacher's continuations along incorrect rollouts. (b) Share of valid error flags in the teacher's critiques across bins of teacher recoverability.</figcaption>
+        </figure>
+      </div>
+
+      <div class="stat-tiles">
+        <div class="tile"><strong>0.82 → 0.29</strong><span>teacher recoverability along incorrect rollouts of problems that it solves readily</span></div>
+        <div class="tile"><strong>53%</strong><span>of the tokens in incorrect rollouts are supervised at prefixes with $\Lambda^T &lt; 0.2$</span></div>
+        <div class="tile"><strong>8% → 50%</strong><span>of the teacher's failed continuations end with the student's own wrong answer</span></div>
+        <div class="tile accent"><strong>73–81%</strong><span>of the errors that the teacher flags are real, at every level of recoverability</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 Method -->
+  <section id="method" class="section tinted">
+    <div class="container">
+      <p class="kicker">02 / Method</p>
+      <h2>Critique, cut, rewrite, and score with the critique.</h2>
+      <div class="lead">
+        <p>CriticOPD builds training sequences that the student writes from the states that it reaches at inference, and on which the supervision of the teacher is reliable.</p>
+      </div>
+
+      <ol class="steps">
+        <li><span class="step-n">1</span><h3>Critique</h3><p>An incorrect or truncated rollout goes to the teacher with the reference answer. The teacher lists each error with its paragraph, the erroneous sentence, and a short fix, and the critique ends with the reference answer.</p></li>
+        <li><span class="step-n">2</span><h3>Cut</h3><p>The student keeps its prefix through the paragraph of the last listed error and discards the rest, so the rewrite starts where recoverability has declined.</p></li>
+        <li><span class="step-n">3</span><h3>Rewrite</h3><p>The student continues from the cut point with the critique in its context. It writes every token of the new suffix.</p></li>
+        <li><span class="step-n">4</span><h3>Score</h3><p>The teacher scores the suffix with the critique in its context, and the student learns from the same sequence without the critique.</p></li>
+      </ol>
+
+      <div class="explorer">
+        <div class="explorer-head">
+          <div>
+            <h3>Where does the supervision fall after the student errs?</h3>
+            <p class="muted">Pick a method to see who writes each token of the training sequence and which tokens receive a loss.</p>
+          </div>
+          <div class="tabs" role="tablist" aria-label="Method">
+            <button type="button" role="tab" data-m="opd">OPD</button>
+            <button type="button" role="tab" data-m="trunc">Truncate</button>
+            <button type="button" role="tab" data-m="takeover">Takeover</button>
+            <button type="button" role="tab" data-m="ours">CriticOPD</button>
+          </div>
+        </div>
+        <div class="strip-wrap">
+          <div id="strip" class="strip" aria-live="polite"></div>
+          <div id="loss" class="strip loss" aria-hidden="true"></div>
+          <div class="err-mark" aria-hidden="true"><span>error</span></div>
+        </div>
+        <div class="explorer-body">
+          <p id="m-text" class="m-text"></p>
+          <ul id="props" class="props"></ul>
+        </div>
+        <div class="legend">
+          <span><i class="cell-sw student"></i>student</span>
+          <span><i class="cell-sw error"></i>student error</span>
+          <span><i class="cell-sw follow"></i>continues the error</span>
+          <span><i class="cell-sw teacher"></i>teacher</span>
+          <span><i class="cell-sw critique"></i>critique</span>
+          <span><i class="bar-sw"></i>loss</span>
+          <span><i class="bar-sw fb"></i>loss scored with the critique</span>
+        </div>
+      </div>
+
+      <figure class="figure-block card-figure">
+        <img src="assets/example.png" alt="An example of critique-guided rewriting">
+        <figcaption>An example of critique-guided rewriting. Left: the original solution, with the critiqued paragraphs marked. Middle: the critique, which quotes each erroneous sentence, gives a fix, and ends with the reference answer. Right: the suffix that the student writes from the last error with the critique.</figcaption>
+      </figure>
+
+      <div class="why fb">
+        <div class="why-text">
+          <h3>Feedback distillation</h3>
+          <p>Only the rewritten suffix, from the cut point $\tau$ on, receives supervision. The teacher sees the critique $c$; the student does not.</p>
+          <div class="eq-inline">$$\mathcal{L}_{\mathrm{fb}}(\tilde y; c) = \sum_{t=\tau}^{|\tilde y|} \mathrm{KL}\big(\pi_\theta(\cdot \mid \tilde h_t) \,\big\|\, \pi_T(\cdot \mid \tilde h_t, c)\big)$$</div>
+          <p class="muted">Correct rollouts, and rollouts whose critique lists no complete error, are trained with standard OPD. CriticOPD minimizes $\mathcal{L}_{\mathrm{OPD}} + \mathcal{L}_{\mathrm{fb}}$.</p>
+          <h3 class="sub">On the rewrite, the teacher is reliable again</h3>
+          <p>At 75% of the continuation after the cut point, the recoverability of the teacher is 0.14 on the original rollout and 0.67 on the rewrite with the critique. The success rate of the student without the critique rises from 0.03 to 0.16.</p>
+        </div>
+        <figure class="card-figure">
+          <img src="assets/rewrite.png" alt="Recoverability on original rollouts and critique-guided rewrites">
+          <figcaption>Recoverability of the teacher and the student on original rollouts (dashed) and critique-guided rewrites (solid), against the position relative to the cut point. On the rewrite, the teacher sees the critique, and the student does not.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 Results -->
+  <section id="results" class="section">
+    <div class="container">
+      <p class="kicker">03 / Results</p>
+      <h2>+4.57 points over OPD, with the largest gains on competition problems.</h2>
+      <div class="lead">
+        <p>Qwen3-1.7B student in non-thinking mode, distilled from Qwen3-4B-Instruct-2507 on DAPO-Math-17k. Accuracy (%) with a budget of 32,768 tokens, averaged over 32 samples per problem on AIME and AMC and over 8 samples on the others; mean ± standard deviation over three seeds. The paper adds a Qwen3-0.6B student, OLMo-3 models, and the remaining baselines.</p>
+      </div>
+      <div class="table-wrap">
+        <table class="results">
+          <thead><tr><th>Method</th><th>Step</th><th>AIME24</th><th>AIME25</th><th>AMC23</th><th>MATH500</th><th>Olympiad</th><th>Minerva</th><th>Avg</th></tr></thead>
+          <tbody>
+            <tr><td>OPD</td><td>80</td><td>35.10 <small>± 0.42</small></td><td>22.78 <small>± 0.42</small></td><td>62.94 <small>± 0.40</small></td><td>86.26 <small>± 0.42</small></td><td>56.65 <small>± 0.36</small></td><td>36.78 <small>± 0.53</small></td><td>50.08 <small>± 0.09</small></td></tr>
+            <tr><td>OPSD-T</td><td>60</td><td>37.08 <small>± 0.73</small></td><td>23.51 <small>± 0.51</small></td><td>63.64 <small>± 0.30</small></td><td>86.85 <small>± 0.33</small></td><td>57.47 <small>± 0.19</small></td><td><b>37.53</b> <small>± 0.79</small></td><td>51.01 <small>± 0.39</small></td></tr>
+            <tr><td>FastOPD</td><td>60</td><td>40.97 <small>± 1.84</small></td><td>26.25 <small>± 0.58</small></td><td>66.08 <small>± 0.24</small></td><td>87.28 <small>± 0.36</small></td><td>58.01 <small>± 0.27</small></td><td>36.73 <small>± 0.99</small></td><td>52.55 <small>± 0.36</small></td></tr>
+            <tr><td>RelayOPD</td><td>40</td><td>40.10 <small>± 1.15</small></td><td>29.97 <small>± 0.60</small></td><td>67.32 <small>± 0.52</small></td><td>88.10 <small>± 0.35</small></td><td>59.07 <small>± 0.25</small></td><td>37.50 <small>± 0.12</small></td><td>53.68 <small>± 0.39</small></td></tr>
+            <tr class="ours"><td>CriticOPD</td><td>40</td><td><b>41.11</b> <small>± 1.02</small></td><td><b>30.14</b> <small>± 1.00</small></td><td><b>69.88</b> <small>± 0.26</small></td><td><b>88.87</b> <small>± 0.50</small></td><td><b>60.45</b> <small>± 0.51</small></td><td>37.44 <small>± 0.19</small></td><td><b>54.65</b> <small>± 0.10</small></td></tr>
+            <tr class="delta"><td>Δ vs OPD</td><td></td><td>+6.01</td><td>+7.36</td><td>+6.94</td><td>+2.61</td><td>+3.80</td><td>+0.66</td><td>+4.57</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">CriticOPD reaches its selected step after 40 steps and uses 17.2 A100 GPU-hours, 0.42 times the training compute of OPD at step 80.</p>
+
+      <div class="why">
+        <div class="why-text">
+          <h3>Where the gains come from</h3>
+          <p>The advantage of CriticOPD splits exactly into the OPD advantage on the same sequence and a reward $r_t$ for each token:</p>
+          <div class="eq-inline">$$A_t^{\mathrm{fb}} = \underbrace{\log\pi_T(\tilde y_t \mid \tilde h_t) - \log\pi_\theta(\tilde y_t \mid \tilde h_t)}_{\text{OPD advantage}} + \underbrace{\log\frac{\pi_T(\tilde y_t \mid \tilde h_t, c)}{\pi_T(\tilde y_t \mid \tilde h_t)}}_{r_t}$$</div>
+          <p>$r_t$ is the pointwise mutual information between the token and the critique under the teacher. At 132 cut points, a continuation that corrects the error leads one that continues it by only 0.24 per token under the scoring of OPD, and by 1.47 under the scoring of CriticOPD.</p>
+          <p>The trained student recovers from its own errors more often. On OlympiadBench, which is not part of the training data, the student of CriticOPD continues correctly from incorrect prefixes more often than the student of OPD, by about 0.04 at the last two cut points, while the two students are even on correct prefixes.</p>
+        </div>
+        <figure>
+          <img src="assets/mechanism.png" alt="Advantage per token after the cut point, and gain in success rate on the same prefixes">
+          <figcaption>(a) Advantage per token of two continuations of 64 tokens at the cut point, which either continue or correct the error. (b) Success rate of the CriticOPD student minus that of the OPD student from the same prefixes on OlympiadBench, with 95% confidence bands.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- Resources -->
+  <section id="resources" class="section tinted">
+    <div class="container">
+      <p class="kicker">Resources</p>
+      <h2>Read the paper, run the code.</h2>
+      <div class="grid-4 resource-cards">
+        <div class="rcard disabled"><span class="rtag">Paper</span><strong>arXiv · coming soon</strong><span class="muted">Diagnosis, method, the full comparison, and ablations.</span></div>
+        <a class="rcard" href="https://github.com/kzhao5/CriticOPD"><span class="rtag">Code</span><strong>kzhao5/CriticOPD</strong><span class="muted">CriticOPD on verl, every baseline of the paper, and the evaluation.</span></a>
+        <a class="rcard" href="https://github.com/kzhao5/CriticOPD#-reproducing-the-paper"><span class="rtag">Reproduce</span><strong>Paper scripts</strong><span class="muted">Main table, ablations, and baselines with the settings of the paper.</span></a>
+        <a class="rcard" href="https://github.com/zju-real/Relay-OPD"><span class="rtag">Built on</span><strong>Relay-OPD · verl</strong><span class="muted">CriticOPD is added to Relay-OPD at a pinned commit.</span></a>
+      </div>
+      <div class="grid-2 cards use">
+        <div class="card">
+          <h3>Train and evaluate</h3>
+<pre><code><span class="c"># copy CriticOPD onto Relay-OPD at the pinned commit</span>
+git clone https://github.com/kzhao5/CriticOPD.git
+cd CriticOPD && bash setup.sh
+cd Relay-OPD/relay-opd
+python ../../data/prepare_dapo.py
+
+<span class="c"># models and data: see the README</span>
+SEED=42 OUTPUT_DIR=$PWD/runs/criticopd_seed42 \
+  bash opd/scripts/criticopd/train.sh
+
+<span class="c"># evaluate the checkpoint at step 40</span>
+CKPT=runs/criticopd_seed42/global_step_40
+MODEL=$CKPT/actor/huggingface STEP=40 \
+  RUN_NAME=criticopd_seed42 DATA_DIR=$BENCH \
+  OUT_ROOT=$PWD/eval bash opd/scripts/criticopd/eval.sh</code></pre>
+        </div>
+        <div class="card">
+          <h3>Switches</h3>
+<pre><code><span class="k">CRITIC_OPD_ENABLE</span>=1         <span class="c"># 0: plain OPD</span>
+<span class="k">CRITIC_OPD_GIVE_GT</span>=1        <span class="c"># critic sees the answer</span>
+<span class="k">CRITIC_OPD_KERR</span>=last        <span class="c"># cut after the last error</span>
+<span class="k">CRITIC_OPD_CRITIC_TOKENS</span>=2048 <span class="c"># critique length limit</span>
+<span class="k">CRITIC_OPD_FB_ANSWER</span>=1      <span class="c"># feedback ends with the answer</span>
+<span class="k">CRITIC_OPD_LOSS</span>=fb          <span class="c"># teacher scores with feedback</span>
+<span class="k">CRITIC_OPD_REWRITER</span>=student <span class="c"># who writes the suffix</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Citation -->
+  <section id="citation" class="section">
+    <div class="container narrow">
+      <p class="kicker">Citation</p>
+      <div class="bib">
+        <button id="copy-bib" type="button">Copy</button>
+<pre id="bibtex">@article{zhao2026recovering,
+  title   = {Recovering Reliable Supervision via Critique-Guided On-Policy Distillation},
+  author  = {Zhao, Kaixiang and Yu, Tianrun and Li, Shangzhe and Yang, Yuxiao and Hughes, Amanda and Zhang, Weitong and Killian, Taylor W.},
+  journal = {arXiv preprint},
+  year    = {2026}
+}</pre>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <span><a class="footer-lab" href="https://byu-adept-lab.github.io/"><img src="assets/adept-mark.png" alt="" width="17" height="15">ADEPT Lab</a>, Brigham Young University · University of North Carolina at Chapel Hill</span>
+    <span><a href="https://github.com/kzhao5/CriticOPD">Code</a> released under the Apache License 2.0</span>
+  </div>
+</footer>
+
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script defer src="app.js?v=20261014"></script>
+</body>
+</html>
