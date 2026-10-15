@@ -59,8 +59,6 @@ figcaption { font-size: 0.88rem; color: var(--muted); margin-top: 12px; line-hei
 .site-header nav a, .header-links a { color: var(--text); text-decoration: none; }
 .site-header nav a:hover, .header-links a:hover { color: var(--orange-ink); }
 .header-links { display: flex; align-items: center; gap: 18px; font-size: 0.88rem; font-weight: 600; }
-.header-links .soon { color: var(--muted); font-weight: 500; }
-.soon small, .btn small { font-size: 0.72rem; font-weight: 600; color: var(--muted); }
 
 /* Hero */
 .hero { text-align: center; padding-top: 52px; padding-bottom: 56px; }
@@ -85,8 +83,6 @@ figcaption { font-size: 0.88rem; color: var(--muted); margin-top: 12px; line-hei
 .btn.primary:hover { background: #1d4530; }
 .btn-icon { width: 17px; height: 17px; margin-left: -4px; }
 .btn.ghost { border-color: transparent; color: var(--green); }
-.btn.disabled { color: var(--muted); background: #faf9f6; cursor: default; }
-.btn.disabled:hover { border-color: var(--line); transform: none; }
 
 /* Central idea */
 .idea { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; padding: 48px 52px; border-radius: 22px; background: linear-gradient(135deg, var(--cream) 0%, var(--sage-soft) 100%); border: 1px solid var(--line); }
@@ -219,7 +215,6 @@ td { padding: 10px 14px; border-bottom: 1px solid var(--line); font-variant-nume
 .rcard { display: flex; flex-direction: column; gap: 6px; padding: 22px 24px; background: #fff; border: 1px solid var(--line); border-radius: 16px; text-decoration: none; color: var(--text); transition: border-color .15s, transform .15s, box-shadow .15s; }
 a.rcard:hover { border-color: var(--sage); transform: translateY(-2px); box-shadow: 0 10px 24px rgba(18, 48, 31, 0.07); }
 .rcard strong { color: var(--ink); font-size: 1.05rem; }
-.rcard.disabled strong { color: var(--muted); }
 .rcard .muted { font-size: 0.88rem; line-height: 1.5; }
 .rtag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--orange-ink); }
 .use { margin-top: 20px; }
